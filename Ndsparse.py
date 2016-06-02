@@ -298,6 +298,8 @@ class Ndsparse:
 
         return self.__class__(out,self.shape)
 
+    __truediv__ = __div__
+
     def transpose(self,permutation):
         """
         Transpose Ndsparse matrix in place
