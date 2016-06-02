@@ -124,7 +124,8 @@ class Ndsparse:
         self.dtype = float
 
         # Cleanup
-        self.removeZeros()
+        if not log_space:
+            self.removeZeros()
 
     @property
     def ndim(self):
