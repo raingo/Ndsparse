@@ -367,6 +367,12 @@ class Ndsparse:
         self.shape = tuple(permute(self.shape,permutation))
         return self
 
+    def to_numpy(self):
+        res = np.zeros(self.shape)
+        for key, value in self.entries.items():
+            res[key] = value
+        return res
+
     def reshape(self, shapemat):
         """
         Like the MATLAB reshape. http://www.mathworks.com/help/matlab/ref/reshape.html

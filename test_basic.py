@@ -13,6 +13,10 @@ import os.path as osp
 from Ndsparse import Ndsparse
 
 def main():
+  data = {(0,0):1, (2,5):1}
+  mat = Ndsparse(data)
+  print(mat.to_numpy())
+
   data = {(0,0,0):1, (20,10,100):1}
   mat = Ndsparse(data)
   print(mat.dtype)
