@@ -146,7 +146,7 @@ class Ndsparse:
 
 
     def is_close(self, other):
-        if self.shape != other:
+        if self.shape != other.shape:
             return False
 
         kA = self.entries.keys()
@@ -156,7 +156,7 @@ class Ndsparse:
             return False
 
         for k in kA:
-            if not isclose(self.entries[k] - self.other[k]):
+            if not isclose(self.entries[k], other.entries[k]):
                 return False
         return True
 

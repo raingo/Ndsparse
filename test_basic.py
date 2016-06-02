@@ -19,11 +19,11 @@ def main():
 
   data = {(0,0):1, (2,5):10000000}
   mat1 = Ndsparse(data)
-  assert mat0 == mat1
+  assert mat0.is_close(mat1)
 
   data = {(0,0):1, (2,6):10000000}
   mat2 = Ndsparse(data)
-  assert mat0 != mat2
+  assert not mat0.is_close(mat2)
 
   data = {(0,0,0):1, (20,10,100):1}
   mat = Ndsparse(data)
