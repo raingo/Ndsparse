@@ -13,15 +13,15 @@ import os.path as osp
 from Ndsparse import Ndsparse
 
 def main():
-  data = {(0,0):1, (2,5):10000000}
+  data = {(0,0):1, (2,5):10}
   mat0 = Ndsparse(data)
   print(mat0.to_numpy())
 
-  data = {(0,0):1, (2,5):10000000}
+  data = {(0,0):1, (2,5):10}
   mat1 = Ndsparse(data)
   assert mat0.is_close(mat1)
 
-  data = {(0,0):1, (2,6):10000000}
+  data = {(0,0):1, (2,6):10}
   mat2 = Ndsparse(data)
   assert not mat0.is_close(mat2)
 
@@ -53,7 +53,7 @@ def main():
   mat3 = mat2.repmat(mat.shape+(3,))
   print(mat2.shape)
   print(mat3.shape)
-  print(mat2 + mat3)
+  print(mat2 * mat3)
   # test pairwise
   # test slicing
 

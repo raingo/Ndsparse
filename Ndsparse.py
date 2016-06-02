@@ -190,21 +190,6 @@ class Ndsparse:
     def ravel(self):
         raise NotImplemented
 
-    def is_close(self, other):
-        if self.shape != other:
-            return False
-
-        kA = self.keys()
-        kB = other.keys()
-
-        if kA != kB:
-            return False
-
-        for k in kA:
-            if math.abs(self.entries[k] - self.other[k]) > 1e-6:
-                return False
-        return True
-
     def _reduce(self, axis, op):
         full = range(self.ndim)
         if axis is None:
