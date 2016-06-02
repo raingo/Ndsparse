@@ -5,6 +5,7 @@ import numpy as np
 
 SUPPORTED_DTYPE = (int, long, float, complex)
 def pairwise(fn):
+    only_overlap = fn.func_name in ['__div__', '__mul__']
     @wraps(fn)
     def wrapper(self, other):
         # if other is scalar, only create a new one with the same nnz positions
@@ -15,8 +16,14 @@ def pairwise(fn):
             entries = {key:other for key in keys}
             other = self.__class__(entries, self.shape)
         assert len(self.shape) == len(other.shape), "shape mismatch"
-        lhs = self.repmat(other.shape)
-        rhs = other.repmat(lhs.shape)
+
+        if only_overlap:
+            lhs, rhs = overlap(self, other)
+        else:
+            # in the case of (2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,) and (2,)
+            # repmat is very inefficient
+            lhs = self.repmat(other.shape)
+            rhs = other.repmat(lhs.shape)
 
         assert lhs.shape == rhs.shape, \
               "do not know how to broadcast: %s vs %s" \
@@ -24,6 +31,46 @@ def pairwise(fn):
 
         return fn(lhs, rhs)
     return wrapper
+
+def overlap(mat0, mat1):
+    def _collapse(keys, keeps):
+        res = defaultdict(list)
+        for key in keys:
+            res[tuple([key[i] for i in keeps])].append(key)
+        return res
+
+    shared_dims = [idx for idx, (s0, s1)
+                in enumerate(zip(mat0.shape, mat1.shape))
+                if s0 == s1]
+
+    primary1 = [idx for idx, (s0, s1)
+                in enumerate(zip(mat0.shape, mat1.shape))
+                if s0 != s1 and s0 == 1]
+
+    mA = _collapse(mat0.entries.keys(), shared_dims)
+    mB = _collapse(mat1.entries.keys(), shared_dims)
+
+    kO = set(set(mA.keys()) & set(mB.keys()))
+
+    # 3,4,1 x 3,1,5
+    # 3,4,5
+    shape = list(mat0.shape)
+    for p in primary1:
+        shape[p] = mat1.shape[p]
+
+    A, B= {}, {}
+    for k in kO:
+        for kA in mA[k]:
+            for kB in mB[k]:
+                key = list(kA)
+                # kA: 1,3,1
+                # kB: 1,1,4
+                # key: 1,3,4
+                for p in primary1:
+                    key[p] = kB[p]
+                A[tuple(key)] = mat0.entries[kA]
+                B[tuple(key)] = mat1.entries[kB]
+    return Ndsparse(A, shape), Ndsparse(B, shape)
 
 class Ndsparse:
     """

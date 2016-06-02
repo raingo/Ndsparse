@@ -49,6 +49,23 @@ def main():
   mat.reshape(mat.shape+(1,1,1))
   print(mat)
 
+  ndim = 52
+  key = (1,) * ndim
+  mat0 = Ndsparse({key:1})
+  key = (0,) * (ndim-1) + (1,)
+  mat1 = Ndsparse({key:1})
+
+  print(mat0.size, mat1.size)
+  print(mat0 * mat1)
+
+  data = {(2,3,1):3, (2,2,1):4}
+  mat0 = Ndsparse(data, (3,20,1))
+
+  data = {(2,1,5):9, (2,1,10):5}
+  mat1 = Ndsparse(data, (3,1,15))
+
+  print(mat0*mat1)
+
   pass
 
 if __name__ == "__main__":
