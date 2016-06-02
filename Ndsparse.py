@@ -138,7 +138,10 @@ class Ndsparse:
             res[key] = op(values)
 
         if len(keep) == 0:
-            return res[()]
+            if () in res:
+                return res[()]
+            else:
+                return 0.
         else:
             return self.__class__(res, new_shape)
 
