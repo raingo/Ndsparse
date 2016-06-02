@@ -156,8 +156,8 @@ class Ndsparse:
         if self.shape != other.shape:
             return False
 
-        kA = self.entries.keys()
-        kB = other.entries.keys()
+        kA = sorted(self.entries.keys())
+        kB = sorted(other.entries.keys())
 
         if kA != kB:
             return False
