@@ -8,7 +8,7 @@ log_space = True
 import math
 def logsumexp(target):
     max_v = max(target)
-    return max_v + math.log(sum([exp(t-max_v) for t in target]))
+    return max_v + math.log(sum([math.exp(t-max_v) for t in target]))
 
 SUPPORTED_DTYPE = (int, long, float, complex)
 def pairwise(fn):
