@@ -5,7 +5,7 @@ N-dimensional sparse matrix implementation
 
 Supported operations
 =======
-1. basic slicing
+1. basic slicing. only support `A[:, 3, :]` not `A[2:3, 2]`, and `A[3:4, 3]` will be interpreted as `A[:, 3]`
 2. reshape
 3. pairwise operations, add, mul, sub, div, with support of broadcast and work with scalars
 4. reduce operations, max and sum, along specified axises, like `numpy.sum()` and `numpy.max()`

@@ -13,16 +13,14 @@ def pairwise(fn):
         if isinstance(other, SUPPORTED_DTYPE):
             keys = self.entries.keys()
             entries = {key:other for key in keys}
-            other = self.__class__(entries)
+            other = self.__class__(entries, self.shape)
         assert len(self.shape) == len(other.shape), "shape mismatch"
         lhs = self.repmat(other.shape)
-        rhs = other
-        if lhs is None:
-            lhs = other.repmat(self.shape)
-            rhs = self
-            assert lhs is not None, \
-                    "do not know how to broadcast: %s vs %s" \
-                    % (self.shape, other.shape)
+        rhs = other.repmat(lhs.shape)
+
+        assert lhs.shape == rhs.shape, \
+              "do not know how to broadcast: %s vs %s" \
+              % (self.shape, other.shape)
 
         return fn(lhs, rhs)
     return wrapper
@@ -46,7 +44,6 @@ class Ndsparse:
         if isinstance(args[0], SUPPORTED_DTYPE):
             self.entries = {():args[0]}
             self.shape = ()
-            self.dtype = type(args[0])
 
         # NDsparse from dict of pos,val pairs
         elif args[0].__class__.__name__ == 'dict':
@@ -68,7 +65,7 @@ class Ndsparse:
             key, value = self.entries.iteritems().next()
         except:
             value = 1.
-        self.dtype = type(value)
+        self.dtype = float
 
         # Cleanup
         self.removeZeros()
@@ -80,9 +77,11 @@ class Ndsparse:
     def repmat(self, newshape):
         diff_index = [(idx, s0, s1) for idx, (s0, s1)
                 in enumerate(zip(self.shape, newshape))
-                if s0 != s1]
-        if any([f[1] != 1 for f in diff_index]):
-            return None
+                if s0 != s1 and s0 == 1]
+
+        shape = list(self.shape)
+        for idx, _, _ in diff_index:
+            shape[idx] = newshape[idx]
 
         prev = self.entries
         for idx, _, s1 in diff_index:
@@ -93,13 +92,16 @@ class Ndsparse:
                     key[idx] = i
                     res[tuple(key)] = value
             prev = res
-        return self.__class__(prev)
+        return self.__class__(prev, shape)
 
     def copy(self):
         """
         Copy "constructor"
         """
-        return Ndsparse(self.entries)
+        new = {}
+        for k, v in self.entries.items():
+            new[k] = v
+        return self.__class__(new, self.shape)
 
     @property
     def size(self):
@@ -107,11 +109,11 @@ class Ndsparse:
 
     def swapaxes(self, A, B):
         if A == B:
-            return
+            return self
 
         idxs = range(self.ndim)
         idxs[A], idxs[B] = idxs[B], idxs[A]
-        self.transpose(idxs)
+        return self.transpose(idxs)
 
     def ravel(self):
         raise NotImplemented
@@ -125,6 +127,8 @@ class Ndsparse:
         def _sub(key):
             return tuple([key[i] for i in keep])
 
+        new_shape = tuple([self.shape[i] for i in keep])
+
         mapping = defaultdict(list)
         for key, value in self.entries.iteritems():
             mapping[_sub(key)].append(value)
@@ -136,9 +140,11 @@ class Ndsparse:
         if len(keep) == 0:
             return res[()]
         else:
-            return self.__class__(res)
+            return self.__class__(res, new_shape)
 
-    def sum(self, axis=None):
+    def sum(self, axis=None, dtype=None, out=None):
+        # to compatible with np.sum()
+        # but the dtype and out are ignored
         return self._reduce(axis=axis,op=sum)
 
     def max(self, axis=None):
@@ -154,7 +160,7 @@ class Ndsparse:
             self.reshape(self.shape+(1,)*(len(key)-self.ndim))
 
         slices = [(idx, value) for idx, value in enumerate(key)
-                if value is not None]
+                if value is not None and not isinstance(value, slice)]
         if len(slices) == 0:
             return self
 
@@ -247,7 +253,7 @@ class Ndsparse:
         for pos in otherFree:
             out[pos] = other.entries[pos]
 
-        return Ndsparse(out,self.shape)
+        return self.__class__(out, self.shape)
 
     @pairwise
     def __sub__(self,other):
@@ -264,7 +270,7 @@ class Ndsparse:
         for pos in otherFree:
             out[pos] = -other.entries[pos]
 
-        return Ndsparse(out,self.shape)
+        return self.__class__(out, self.shape)
 
     @pairwise
     def __mul__(self,other):
@@ -277,7 +283,7 @@ class Ndsparse:
         for pos in overlap:
             out[pos] = self.entries[pos] * other.entries[pos]
 
-        return Ndsparse(out,self.shape)
+        return self.__class__(out,self.shape)
 
     @pairwise
     def __div__(self,other):
@@ -290,7 +296,7 @@ class Ndsparse:
         for pos in overlap:
             out[pos] = float(self.entries[pos]) / other.entries[pos]
 
-        return Ndsparse(out,self.shape)
+        return self.__class__(out,self.shape)
 
     def transpose(self,permutation):
         """
@@ -307,6 +313,7 @@ class Ndsparse:
             out[permute(key,permutation)] = value
         self.entries = out
         self.shape = tuple(permute(self.shape,permutation))
+        return self
 
     def reshape(self, shapemat):
         """
@@ -324,6 +331,7 @@ class Ndsparse:
 
         self.entries = res
         self.shape = tuple(shapemat)
+        return self
 
 def permute(vec,permutation):
     """
