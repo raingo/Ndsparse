@@ -183,7 +183,7 @@ class Ndsparse:
             return False
 
         for k in kA:
-            if math.abs(self.entries[k] - self.other[k])/self.entries[k] > 1e-6:
+            if math.abs(self.entries[k] - self.other[k]) > 1e-6:
                 return False
         return True
 
