@@ -221,7 +221,7 @@ class Ndsparse:
             op = logsumexp
         else:
             op = sum
-        return self._reduce(axis=axis,op=sum)
+        return self._reduce(axis=axis,op=op)
 
     def max(self, axis=None):
         return self._reduce(axis=axis,op=max)
