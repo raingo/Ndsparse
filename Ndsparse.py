@@ -3,6 +3,13 @@ import operator
 from functools import wraps
 import numpy as np
 
+log_space = True
+
+import math
+def logsumexp(target):
+    max_v = max(target)
+    return max_v + math.log(sum([exp(t-max_v) for t in target]))
+
 SUPPORTED_DTYPE = (int, long, float, complex)
 def pairwise(fn):
     only_overlap = fn.func_name in ['__div__', '__mul__']
@@ -195,6 +202,10 @@ class Ndsparse:
     def sum(self, axis=None, dtype=None, out=None):
         # to compatible with np.sum()
         # but the dtype and out are ignored
+        if log_space:
+            op = logsumexp
+        else:
+            op = sum
         return self._reduce(axis=axis,op=sum)
 
     def max(self, axis=None):
@@ -293,6 +304,7 @@ class Ndsparse:
         """
         Elementwise addition of self + other.
         """
+        assert not log_space, "log space do not support add"
         overlap, selfFree, otherFree = self.mergePositions(other)
         out = {}
 
@@ -310,6 +322,7 @@ class Ndsparse:
         """
         Elementwise subtraction of self - other.
         """
+        assert not log_space, "log space do not support sub"
         overlap, selfFree, otherFree = self.mergePositions(other)
         out = {}
 
@@ -331,7 +344,10 @@ class Ndsparse:
         out = {}
 
         for pos in overlap:
-            out[pos] = self.entries[pos] * other.entries[pos]
+            if log_space:
+                out[pos] = self.entries[pos] + other.entries[pos]
+            else:
+                out[pos] = self.entries[pos] * other.entries[pos]
 
         return self.__class__(out,self.shape)
 
@@ -344,7 +360,10 @@ class Ndsparse:
         out = {}
 
         for pos in overlap:
-            out[pos] = float(self.entries[pos]) / other.entries[pos]
+            if log_space:
+                out[pos] = float(self.entries[pos]) - other.entries[pos]
+            else:
+                out[pos] = float(self.entries[pos]) / other.entries[pos]
 
         return self.__class__(out,self.shape)
 
@@ -370,7 +389,10 @@ class Ndsparse:
     def to_numpy(self):
         res = np.zeros(self.shape)
         for key, value in self.entries.items():
-            res[key] = value
+            if log_space:
+                res[key] = math.exp(value)
+            else:
+                res[key] = value
         return res
 
     def reshape(self, shapemat):
