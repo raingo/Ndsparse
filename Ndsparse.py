@@ -149,8 +149,8 @@ class Ndsparse:
         if self.shape != other:
             return False
 
-        kA = self.keys()
-        kB = other.keys()
+        kA = self.entries.keys()
+        kB = other.entries.keys()
 
         if kA != kB:
             return False
