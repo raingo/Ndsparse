@@ -45,6 +45,10 @@ def main():
   # test pairwise
   # test slicing
 
+  print(mat)
+  mat.reshape(mat.shape+(1,1,1))
+  print(mat)
+
   pass
 
 if __name__ == "__main__":

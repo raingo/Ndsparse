@@ -322,13 +322,30 @@ class Ndsparse:
         assert reduce(operator.mul, shapemat, 1) == self.size, \
                 'reshape can not change the number of elements'
         shapemat = tuple(shapemat)
-        def _map(key):
-            if self.shape == shapemat:
-                return key
 
+        def _map0(key):
             # FIXME: the following two functions fail with ndim > 32
             index = np.ravel_multi_index(key, self.shape)
             return np.unravel_index(index, shapemat)
+
+        def isexpand():
+            # (2, 3, 4)
+            # (2, 3, 4, 1, 1)
+            return len(shapemat) > len(self.shape) \
+                    and shapemat[:len(self.shape)] == self.shape \
+                    and all([s==1 for s in shapemat[(len(self.shape)+1):]])
+
+        def _map1(key):
+            key += (0,) * (len(shapemat) - len(self.shape))
+            return key
+
+        if self.shape == shapemat:
+            _map = lambda x:x
+        elif isexpand():
+            _map = _map1
+            pass
+        else:
+            _map = _map0
 
         res = {}
         for key, value in self.entries.items():
