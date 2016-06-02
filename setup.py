@@ -16,8 +16,6 @@ setup(name='Ndsparse',
       description='Multi dimensional sparse matrix',
       author='Raingo Lee',
       author_email='raingomm at gmail.com',
-      url='https://github.com/raingo/Ndsparse',
-      packages=['Ndsparse'],
-     )
+      url='https://github.com/raingo/Ndsparse')
 
 # vim: tabstop=4 expandtab shiftwidth=2 softtabstop=2
