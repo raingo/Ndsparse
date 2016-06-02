@@ -3,6 +3,9 @@ import operator
 from functools import wraps
 import numpy as np
 
+def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
+    return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
 SUPPORTED_DTYPE = (int, long, float, complex)
 def pairwise(fn):
     only_overlap = fn.func_name in ['__div__', '__mul__']
@@ -153,7 +156,7 @@ class Ndsparse:
             return False
 
         for k in kA:
-            if math.abs(self.entries[k] - self.other[k]) > 1e-6:
+            if not isclose(self.entries[k] - self.other[k]):
                 return False
         return True
 
