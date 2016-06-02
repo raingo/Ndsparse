@@ -5,6 +5,12 @@ import numpy as np
 
 def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
     return abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+log_space = True
+
+import math
+def logsumexp(target):
+    max_v = max(target)
+    return max_v + math.log(sum([math.exp(t-max_v) for t in target]))
 
 SUPPORTED_DTYPE = (int, long, float, complex)
 def pairwise(fn):
@@ -184,6 +190,21 @@ class Ndsparse:
     def ravel(self):
         raise NotImplemented
 
+    def is_close(self, other):
+        if self.shape != other:
+            return False
+
+        kA = self.keys()
+        kB = other.keys()
+
+        if kA != kB:
+            return False
+
+        for k in kA:
+            if math.abs(self.entries[k] - self.other[k]) > 1e-6:
+                return False
+        return True
+
     def _reduce(self, axis, op):
         full = range(self.ndim)
         if axis is None:
@@ -214,7 +235,11 @@ class Ndsparse:
     def sum(self, axis=None, dtype=None, out=None):
         # to compatible with np.sum()
         # but the dtype and out are ignored
-        return self._reduce(axis=axis,op=sum)
+        if log_space:
+            op = logsumexp
+        else:
+            op = sum
+        return self._reduce(axis=axis,op=op)
 
     def max(self, axis=None):
         return self._reduce(axis=axis,op=max)
@@ -312,6 +337,7 @@ class Ndsparse:
         """
         Elementwise addition of self + other.
         """
+        assert not log_space, "log space do not support add"
         overlap, selfFree, otherFree = self.mergePositions(other)
         out = {}
 
@@ -329,6 +355,7 @@ class Ndsparse:
         """
         Elementwise subtraction of self - other.
         """
+        assert not log_space, "log space do not support sub"
         overlap, selfFree, otherFree = self.mergePositions(other)
         out = {}
 
@@ -350,7 +377,10 @@ class Ndsparse:
         out = {}
 
         for pos in overlap:
-            out[pos] = self.entries[pos] * other.entries[pos]
+            if log_space:
+                out[pos] = self.entries[pos] + other.entries[pos]
+            else:
+                out[pos] = self.entries[pos] * other.entries[pos]
 
         return self.__class__(out,self.shape)
 
@@ -363,7 +393,10 @@ class Ndsparse:
         out = {}
 
         for pos in overlap:
-            out[pos] = float(self.entries[pos]) / other.entries[pos]
+            if log_space:
+                out[pos] = float(self.entries[pos]) - other.entries[pos]
+            else:
+                out[pos] = float(self.entries[pos]) / other.entries[pos]
 
         return self.__class__(out,self.shape)
 
@@ -389,7 +422,10 @@ class Ndsparse:
     def to_numpy(self):
         res = np.zeros(self.shape)
         for key, value in self.entries.items():
-            res[key] = value
+            if log_space:
+                res[key] = math.exp(value)
+            else:
+                res[key] = value
         return res
 
     def reshape(self, shapemat):
