@@ -16,8 +16,8 @@ q = Ndsparse(a1)
 r = Ndsparse(a2)
 print q
 print r
-s = q.contract(r,1,0)
-print s
+#s = q.contract(r,1,0)
+#print s
 
 print 'shape q:', getEntriesShape(a1)
 print 'shape e:', getEntriesShape(a2)

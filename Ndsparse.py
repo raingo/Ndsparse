@@ -41,7 +41,6 @@ class Ndsparse:
         Constructor
         NDsparse(scalar)
         NDsparse(dict of (pos):val pairs, optional list of dims for shape)
-        NDsparse(nested list dense representation)
         """
         # NDsparse from a single scalar
         if isinstance(args[0], SUPPORTED_DTYPE):
@@ -60,12 +59,6 @@ class Ndsparse:
                 self.shape = tuple(args[1])
             else:
                 self.shape = getEntriesShape(args[0])
-
-        # NDsparse from list of lists (of lists...) dense format
-        # 1st dim = rows, 2nd dim = cols, 3rd dim = pages, ...
-        elif args[0].__class__.__name__ == 'list':
-            self.entries = buildEntriesDictFromNestedLists(args[0])
-            self.shape = getListsShape(args[0])
 
         # Catch unsupported initialization
         else:
@@ -337,63 +330,6 @@ def permute(vec,permutation):
     Permute vec tuple according to permutation tuple.
     """
     return tuple([vec[permutation[i]] for i in range(len(vec))])
-
-def traverseWithIndices(superList, treeTypes=(list, tuple)):
-    """
-    Traverse over tree structure (nested lists), with indices. Returns a nested list
-    with the left element a nested list and the right element the next position.
-    Call flatten to get into a nice form.
-    """
-    idxs = []
-    if isinstance(superList, treeTypes):
-        for idx,value in enumerate(superList):
-            idxs = idxs[0:-1]
-            idxs.append(idx)
-            for subValue in traverseWithIndices(value):
-                yield [subValue,idxs]
-    else:
-        yield [superList,idxs]
-
-def flatten(superList, treeTypes=(list, tuple)):
-    '''
-    Flatten arbitrarily nested lists into a single list, removing empty lists.
-    '''
-    flatList = []
-    for subList in superList:
-        if isinstance(subList, treeTypes):
-            flatList.extend(flatten(subList))
-        else:
-            flatList.append(subList)
-    return flatList
-
-def buildEntriesDictFromNestedLists(nestedLists):
-    """
-    Build dict of pos:val pairs for Ndsparse.entries format from a flat list where list[0] is
-    the val and list[1:-1] are the pos indices in reverse order.
-    """
-    # Special case for scalar in a list
-    #    Warning: first dim shouldn't be singleton
-    if len(nestedLists) == 1:
-        return {():nestedLists[0]}
-
-    entriesDict = {}
-    for entry in traverseWithIndices(nestedLists):
-        flatEntry = flatten(entry)
-        pos = tuple(flatEntry[-1:0:-1])
-        val = flatEntry[0]
-        entriesDict[pos] = val
-    return entriesDict
-
-def getListsShape(nestedLists, treeTypes=(list, tuple)):
-    """
-    Get dimensions of nested lists
-    """
-    shape = []
-    lst = list(nestedLists)
-    while isinstance(lst, treeTypes):
-        shape.append(len(lst))
-        lst = lst[0]
-    return tuple(shape)
 
 def getEntriesShape(entries):
     """
