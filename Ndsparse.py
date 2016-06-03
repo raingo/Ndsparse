@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+"""
+Code description
+"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+__author__ = "Raingo Lee (raingomm@gmail.com)"
+
+import sys
+import os.path as osp
+
 from collections import defaultdict
 import operator
 from functools import wraps
@@ -178,7 +190,7 @@ class Ndsparse:
 
     @property
     def size(self):
-        return reduce(operator.mul, self.shape, 1)
+        return reduce(operator.mul, self.shape, 1L)
 
     def swapaxes(self, A, B):
         if A == B:
@@ -414,11 +426,27 @@ class Ndsparse:
                 res[key] = value
         return res
 
+    def compare_size(self, shapemat):
+        # more scalable way to deal with super long shape
+        # avoid overflow
+        compare = 1.
+        shape0 = sorted(self.shape)
+        shape1 = sorted(shapemat)
+        if len(shape0) < len(shape1):
+            shape0, shape1 = shape1, shape0
+        for s0, s1 in zip(shape0, shape1):
+            compare *= s0 / s1
+
+        for s0 in shape0[len(shape1):]:
+            compare *= s0
+
+        return compare == 1
+
     def reshape(self, shapemat):
         """
         Like the MATLAB reshape. http://www.mathworks.com/help/matlab/ref/reshape.html
         """
-        assert reduce(operator.mul, shapemat, 1) == self.size, \
+        assert self.compare_size(shapemat), \
                 'reshape can not change the number of elements'
         shapemat = tuple(shapemat)
 

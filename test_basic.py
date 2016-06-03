@@ -21,6 +21,8 @@ def main():
   mat1 = Ndsparse(data)
   assert mat0.is_close(mat1)
 
+  assert mat0.compare_size(mat1.shape)
+
   data = {(0,0):1, (2,6):10}
   mat2 = Ndsparse(data)
   assert not mat0.is_close(mat2)
