@@ -196,9 +196,20 @@ class Ndsparse:
         if A == B:
             return self
 
-        idxs = range(self.ndim)
-        idxs[A], idxs[B] = idxs[B], idxs[A]
-        return self.transpose(idxs)
+        def _swap(vec):
+          vec = list(vec)
+          vec[A], vec[B] = vec[B], vec[A]
+          return tuple(vec)
+        new_shape = _swap(self.shape)
+
+        out = {}
+        for key, value in self.entries.items():
+          out[_swap(key)] = value
+
+        self.entries = entries
+        self.shape = shape
+
+        return self
 
     def ravel(self):
         raise NotImplemented
