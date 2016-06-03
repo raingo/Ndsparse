@@ -32,6 +32,9 @@ def main():
 
   data = {(0,0):1, (2,6):10}
   mat2 = Ndsparse(data)
+  print(mat2.shape)
+  mat2.swapaxes(0, 1)
+  print(mat2.shape)
   assert not mat0.is_close(mat2)
 
   data = {(0,0,0):1, (20,10,100):1}

@@ -192,6 +192,7 @@ class Ndsparse:
     def size(self):
         return reduce(operator.mul, self.shape, 1L)
 
+    #@profile
     def swapaxes(self, A, B):
         if A == B:
             return self
@@ -206,8 +207,8 @@ class Ndsparse:
         for key, value in self.entries.items():
           out[_swap(key)] = value
 
-        self.entries = entries
-        self.shape = shape
+        self.entries = out
+        self.shape = new_shape
 
         return self
 
