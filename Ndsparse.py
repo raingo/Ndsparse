@@ -255,6 +255,8 @@ class Ndsparse:
         return self._reduce(axis=axis,op=max)
 
     def __getitem__(self, key):
+        if isinstance(key, int):
+            key = (key,)
         # if key[i] == None, all elements along that direction is returned
         if len(key) > self.ndim:
             # all key are None, equal to reshape
@@ -281,7 +283,10 @@ class Ndsparse:
             if all([key[k] == v for k, v in slices]):
                 # got one
                 res[_map(key)] = value
-        return self.__class__(res, new_shape)
+        if len(new_shape) == 0:
+            return res[()]
+        else:
+            return self.__class__(res, new_shape)
 
     def __repr__(self):
         """
