@@ -93,7 +93,7 @@ def overlap(mat0, mat1):
                 B[tuple(key)] = mat1.entries[kB]
     return Ndsparse(A, shape), Ndsparse(B, shape)
 
-class Ndsparse:
+class Ndsparse(object):
     """
     N-dimensional sparse matrix.
     entries: dict of positions and values in matrix
